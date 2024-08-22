@@ -11,6 +11,7 @@ const ws = new WebSocket(`ws://${location.host}/api`);
 let messageValue = ref(null);
 let timer = ref(null);
 const scrollbar = ref(null);
+const btn = ref(null);
 onMounted(() => {
     if (window.WebSocket) {
         init();
@@ -70,23 +71,24 @@ const init = () => {
 const handleSendBtnClick = () => {
     if (!messageValue.value || !messageValue.value.trim()) {
         message.warning('请输入要发送的内容');
-        return;
+    } else {
+        //接收发送的内容
+        ws.send(
+            //将返回的数据以对象的形式 展示在前台
+            JSON.stringify({
+                userInfor: messageStore.userInfor,
+                msg: messageValue.value,
+                type: 'message',
+            })
+        );
+        btn.value.$el.focus();
+        //输入完信息后 置空
+        messageValue.value = '';
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            scrollbar.value.scrollBy(0, 240 * messageStore.getMessageList.length);
+        }, 100);
     }
-    //接收发送的内容
-    ws.send(
-        //将返回的数据以对象的形式 展示在前台
-        JSON.stringify({
-            userInfor: messageStore.userInfor,
-            msg: messageValue.value,
-            type: 'message',
-        })
-    );
-    //输入完信息后 置空
-    messageValue.value = '';
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-        scrollbar.value.scrollBy(0, 240 * messageStore.getMessageList.length);
-    }, 100);
 };
 const enterdown = e => {
     if (e.keyCode == 13) {
@@ -151,10 +153,10 @@ onBeforeUnmount(() => {
             </n-scrollbar>
             <n-flex :wrap="false" style="padding: 0 15px">
                 <n-input size="large" v-model:value="messageValue" type="text" placeholder="" />
-                <n-button size="large" @click="handleSendBtnClick">发送</n-button>
+                <n-button size="large" @click="handleSendBtnClick" ref="btn">发送</n-button>
             </n-flex>
         </div>
-        <n-button size="large" @click="handlerClose">关闭</n-button>
+        <n-button :focusable="false" size="large" @click="handlerClose">关闭</n-button>
     </div>
 </template>
 
